@@ -3,7 +3,7 @@ const pool = new Pool({
   user: 'postgres',
   host: 'localhost',
   database: 'todo',
-  password: 'password',
+  password: 'password', //(put according to ur db)
   port: 5432,
 })
 
@@ -11,8 +11,13 @@ const pool = new Pool({
 // CREATE todos
 const createTodo = (req, res) => {
     const {title, description} = req.body
-
-    pool.query('INSERT INTO tododb (title, description) VALUES ($1, $2)', [title, description], (error, results) => {
+    var priority_no;
+    pool.query(`SELECT COUNT(*) FROM tododb`)
+        .then(result => {
+          priority_no = parseInt(result)
+        })
+        .catch(err => console.error('Error executing query', err.stack))
+    pool.query('INSERT INTO tododb (title, description, priority) VALUES ($1, $2, $3)', [title, description, priority_no + 1], (error, results) => {
         if(error) {
             throw error
         }
@@ -73,12 +78,19 @@ const setPriorityTodo = (req, res) => {
               res.send(200).send(`priority has been set for list: ${id}`)
           }
       )
+      pool.query('UPDATE tododb SET priority = $1 WHERE id = $2', [pos, id], (error, results) => {
+          if(error) {
+            throw error
+          }
+          res.status(200).send('operation success')
+        }
+      )
     } 
     else {
       //-1 (id+1, pos)
       pool.query(
-        'UPDATE tododb SET priority = priority + 1 WHERE priority >= $1 AND priority <= $2',
-        [pos, _id - 1],
+        'UPDATE tododb SET priority = priority - 1 WHERE priority >= $1 AND priority <= $2',
+        [_id + 1, pos],
         (error, results) => {
             if(error) {
                 throw error
@@ -86,8 +98,14 @@ const setPriorityTodo = (req, res) => {
             res.send(200).send(`priority has been set for list: ${id}`)
         }
     )
-    }
-
+    pool.query('UPDATE tododb SET priority = $1 WHERE id = $2', [pos, id], (error, results) => {
+        if(error) {
+          throw error
+        }
+        res.status(200).send('operation success')
+      }
+    )
+  }
 }
 
 // SEARCH todos
