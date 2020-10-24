@@ -11,6 +11,7 @@ app.use(bodyParser.urlencoded({extended: true}))
 app.post('/api/create', db.createTodo)
 app.delete('/api/:id', db.deleteTodo)
 app.put('/api/:id', db.updateTodo)
+app.put('/api/:id', db.setPriorityTodo)
 app.get('/api', db.searchTodos)
 
 app.listen(port, () => {
